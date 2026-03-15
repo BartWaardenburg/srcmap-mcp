@@ -30,7 +30,7 @@ jobs:
           echo "pct=$COVERAGE" >> "$GITHUB_OUTPUT"
 
       - name: Update coverage badge
-        if: github.ref == 'refs/heads/main' && secrets.GIST_SECRET != ''
+        if: github.ref == 'refs/heads/main'
         continue-on-error: true
         uses: schneegans/dynamic-badges-action@v1.7.0
         with:
