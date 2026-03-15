@@ -4,11 +4,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org/)
 [![CI](https://github.com/BartWaardenburg/srcmap-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/BartWaardenburg/srcmap-mcp/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/BartWaardenburg/4576777b0952d0be52c69aac3efb5c7c/raw/srcmap-mcp-coverage.json)](https://bartwaardenburg.github.io/srcmap-mcp/)
 [![MCP](https://img.shields.io/badge/MCP-compatible-8A2BE2.svg)](https://modelcontextprotocol.io)
 
 MCP server for source map debugging. Fetch, inspect, look up, and extract original sources from any production website — directly from your AI assistant.
-
-> Unofficial community server. Not affiliated with the srcmap project.
 
 ## Add To Your Editor
 
@@ -149,26 +148,29 @@ Example: `SRCMAP_TOOLSETS=lookup,fetch` enables only lookup and fetch tools.
 
 ## Example Usage
 
-Ask your AI assistant:
+### Debug a production error
 
-- "Fetch the source map for https://cdn.example.com/app.min.js and extract the original sources"
-- "Look up what's at line 0, column 84729 in bundle.js.map"
-- "Show me the original source for this minified error position"
-- "List all the source files in this source map"
-- "Validate this source map file"
-- "What source file corresponds to this error location?"
-- "Extract all the original TypeScript sources from this production bundle"
+> Sentry is showing `TypeError: Cannot read property 'items' of undefined` at `main-2f8a.js:1:34291` on https://app.example.com — what's the original source?
 
-## Debugging Workflow
+The assistant fetches the bundle and source map, looks up the position, and shows you the exact original file and line causing the error — with surrounding context.
 
-The typical workflow for debugging a production website:
+### Investigate what's deployed
 
-```
-1. sourcemap_fetch — Download bundle + source map from URL
-2. sourcemap_sources — List what's inside
-3. sourcemap_lookup — Map error positions to original source
-4. sourcemap_extract_sources — Get the full source tree
-```
+> What code is actually running on https://app.example.com? Extract the source tree so we can look around.
+
+The assistant pulls the production bundles, extracts all original sources, and gives you the full project structure to explore.
+
+### Trace a bug from a stack trace
+
+> Users are reporting a crash on our checkout page. Here's the minified stack trace — can you trace each frame back to the original source?
+>
+> ```
+> at https://cdn.example.com/checkout-a3f2.js:1:48293
+> at https://cdn.example.com/checkout-a3f2.js:1:51007
+> at https://cdn.example.com/vendor-9b1e.js:1:12844
+> ```
+
+The assistant resolves each frame to the original file, function name, and line number — turning a wall of minified positions into a readable stack trace.
 
 ## Development
 
