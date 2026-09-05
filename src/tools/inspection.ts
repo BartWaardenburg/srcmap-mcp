@@ -55,9 +55,8 @@ export const registerInspectionTools = (server: McpServer, client: SrcmapClient)
     },
     guarded(async ({ file }) => {
       const result = await client.validate(file);
-      const valid = result.valid as boolean;
 
-      if (valid) {
+      if (result.valid) {
         return toTextResult(
           `Valid source map v3: ${result.sources} sources, ${result.names} names, ${result.mappings} mappings across ${result.lines} lines`,
           result,

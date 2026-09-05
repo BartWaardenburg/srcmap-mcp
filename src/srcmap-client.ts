@@ -9,6 +9,7 @@ import type {
   ResolveResult,
   SourceMapInfo,
   SourcesList,
+  ValidateResult,
 } from "./types.js";
 
 const execFileAsync = promisify(execFile);
@@ -46,7 +47,6 @@ export class SrcmapClient {
       const err = error as { stderr?: string; code?: string; message?: string };
       const stderr = err.stderr ?? "";
 
-      // Try to parse structured JSON error from stderr
       try {
         const parsed = JSON.parse(stderr) as { error: string; code: string };
         throw new SrcmapError(parsed.error, parsed.code);
@@ -84,7 +84,7 @@ export class SrcmapClient {
     return this.cachedRunJson(`info:${file}`, ["info", file]);
   }
 
-  async validate(file: string): Promise<Record<string, unknown>> {
+  async validate(file: string): Promise<ValidateResult> {
     return this.cachedRunJson(`validate:${file}`, ["validate", file]);
   }
 

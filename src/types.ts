@@ -13,6 +13,10 @@ export interface SourceMapInfo {
   debugId: string | null;
 }
 
+export type ValidateResult =
+  | { valid: true; version: number; sources: number; names: number; mappings: number; lines: number }
+  | { valid: false; error: string };
+
 export interface LookupResult {
   source: string;
   line: number;
