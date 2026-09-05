@@ -12,7 +12,6 @@
   ],
   "scripts": {
     "dev": "tsx src/index.ts",
-    "start": "node --enable-source-maps dist/index.js",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
