@@ -25,6 +25,6 @@ export const checkForUpdate = async (
       );
     }
   } catch {
-    // Best-effort — silently ignore network errors
+    // A failed update check must never disturb the server
   }
 };
