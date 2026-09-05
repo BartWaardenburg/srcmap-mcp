@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
 import type { SrcmapClient } from "../srcmap-client.js";
-import { formatSize, toTextResult, toErrorResult } from "../tool-result.js";
+import { formatSize, toTextResult, guarded } from "../tool-result.js";
 
 export const registerFetchTools = (server: McpServer, client: SrcmapClient): void => {
   server.registerTool(
@@ -20,25 +20,21 @@ export const registerFetchTools = (server: McpServer, client: SrcmapClient): voi
         outputDir: z.string().default("/tmp/srcmap").describe("Directory to save the downloaded files (default: /tmp/srcmap)"),
       }),
     },
-    async ({ url, outputDir }) => {
-      try {
-        const result = await client.fetch(url, outputDir);
+    guarded(async ({ url, outputDir }) => {
+      const result = await client.fetch(url, outputDir);
 
-        const parts = [
-          `Fetched bundle: ${result.bundle.file} (${formatSize(result.bundle.size)})`,
-        ];
+      const parts = [
+        `Fetched bundle: ${result.bundle.file} (${formatSize(result.bundle.size)})`,
+      ];
 
-        if (result.sourceMap) {
-          parts.push(`Source map: ${result.sourceMap.file} (${formatSize(result.sourceMap.size)})`);
-        } else {
-          parts.push("No source map found for this bundle.");
-        }
-
-        return toTextResult(parts.join("\n"), result);
-      } catch (error) {
-        return toErrorResult(error);
+      if (result.sourceMap) {
+        parts.push(`Source map: ${result.sourceMap.file} (${formatSize(result.sourceMap.size)})`);
+      } else {
+        parts.push("No source map found for this bundle.");
       }
-    },
+
+      return toTextResult(parts.join("\n"), result);
+    }),
   );
 
   server.registerTool(
@@ -57,29 +53,25 @@ export const registerFetchTools = (server: McpServer, client: SrcmapClient): voi
         outputDir: z.string().default("/tmp/srcmap-sources").describe("Directory to extract source files to (default: /tmp/srcmap-sources)"),
       }),
     },
-    async ({ file, outputDir }) => {
-      try {
-        const result = await client.sourcesExtract(file, outputDir);
+    guarded(async ({ file, outputDir }) => {
+      const result = await client.sourcesExtract(file, outputDir);
 
-        const parts = [
-          `Extracted ${result.extracted.length}/${result.total} sources to ${outputDir}`,
-        ];
+      const parts = [
+        `Extracted ${result.extracted.length}/${result.total} sources to ${outputDir}`,
+      ];
 
-        if (result.extracted.length > 0) {
-          parts.push("");
-          for (const entry of result.extracted) {
-            parts.push(`  ${entry.source} [${formatSize(entry.size)}]`);
-          }
+      if (result.extracted.length > 0) {
+        parts.push("");
+        for (const entry of result.extracted) {
+          parts.push(`  ${entry.source} [${formatSize(entry.size)}]`);
         }
-
-        if (result.skipped.length > 0) {
-          parts.push("", `Skipped ${result.skipped.length} sources without content`);
-        }
-
-        return toTextResult(parts.join("\n"), result);
-      } catch (error) {
-        return toErrorResult(error);
       }
-    },
+
+      if (result.skipped.length > 0) {
+        parts.push("", `Skipped ${result.skipped.length} sources without content`);
+      }
+
+      return toTextResult(parts.join("\n"), result);
+    }),
   );
 };

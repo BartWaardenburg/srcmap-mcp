@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
 import type { SrcmapClient } from "../srcmap-client.js";
-import { toTextResult, toErrorResult } from "../tool-result.js";
+import { toTextResult, guarded } from "../tool-result.js";
 
 export const registerLookupTools = (server: McpServer, client: SrcmapClient): void => {
   server.registerTool(
@@ -23,30 +23,26 @@ export const registerLookupTools = (server: McpServer, client: SrcmapClient): vo
         context: z.number().min(0).max(50).default(5).describe("Number of context lines to show around the matched position (default: 5)"),
       }),
     },
-    async ({ file, line, column, context }) => {
-      try {
-        const result = await client.lookup(file, line, column, context);
+    guarded(async ({ file, line, column, context }) => {
+      const result = await client.lookup(file, line, column, context);
 
-        const parts = [
-          `${result.source}:${result.line}:${result.column}`,
-          result.name ? `  name: ${result.name}` : null,
-        ].filter(Boolean);
+      const parts = [
+        `${result.source}:${result.line}:${result.column}`,
+        result.name ? `  name: ${result.name}` : null,
+      ].filter(Boolean);
 
-        if (result.context && result.context.length > 0) {
-          parts.push("");
-          const gutterWidth = String(result.context[result.context.length - 1].line).length;
-          for (const ctx of result.context) {
-            const marker = ctx.highlight ? ">" : " ";
-            const lineNum = String(ctx.line).padStart(gutterWidth);
-            parts.push(`${marker} ${lineNum} | ${ctx.text}`);
-          }
+      if (result.context && result.context.length > 0) {
+        parts.push("");
+        const gutterWidth = String(result.context[result.context.length - 1].line).length;
+        for (const ctx of result.context) {
+          const marker = ctx.highlight ? ">" : " ";
+          const lineNum = String(ctx.line).padStart(gutterWidth);
+          parts.push(`${marker} ${lineNum} | ${ctx.text}`);
         }
-
-        return toTextResult(parts.join("\n"), result);
-      } catch (error) {
-        return toErrorResult(error);
       }
-    },
+
+      return toTextResult(parts.join("\n"), result);
+    }),
   );
 
   server.registerTool(
@@ -66,17 +62,13 @@ export const registerLookupTools = (server: McpServer, client: SrcmapClient): vo
         column: z.number().min(0).describe("Original column number (0-based)"),
       }),
     },
-    async ({ file, source, line, column }) => {
-      try {
-        const result = await client.resolve(file, source, line, column);
+    guarded(async ({ file, source, line, column }) => {
+      const result = await client.resolve(file, source, line, column);
 
-        return toTextResult(
-          `Generated position: ${result.line}:${result.column}`,
-          result,
-        );
-      } catch (error) {
-        return toErrorResult(error);
-      }
-    },
+      return toTextResult(
+        `Generated position: ${result.line}:${result.column}`,
+        result,
+      );
+    }),
   );
 };

@@ -72,3 +72,9 @@ export const toErrorResult = (error: unknown) => {
     isError: true,
   };
 };
+
+/** Wraps a tool handler so any thrown error becomes an error result instead of a rejected call. */
+export const guarded =
+  <A, T>(handler: (args: A) => Promise<T>) =>
+  (args: A): Promise<T | ReturnType<typeof toErrorResult>> =>
+    handler(args).catch(toErrorResult);

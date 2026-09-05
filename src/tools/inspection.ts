@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
 import type { SrcmapClient } from "../srcmap-client.js";
-import { formatSize, toTextResult, toErrorResult } from "../tool-result.js";
+import { formatSize, toTextResult, guarded } from "../tool-result.js";
 
 export const registerInspectionTools = (server: McpServer, client: SrcmapClient): void => {
   server.registerTool(
@@ -18,30 +18,26 @@ export const registerInspectionTools = (server: McpServer, client: SrcmapClient)
         file: z.string().describe("Path to a source map file (.map)"),
       }),
     },
-    async ({ file }) => {
-      try {
-        const info = await client.info(file);
+    guarded(async ({ file }) => {
+      const info = await client.info(file);
 
-        const lines = [
-          "Source map info:",
-          info.file ? `  File: ${info.file}` : null,
-          `  Sources: ${info.sources}`,
-          `  Names: ${info.names}`,
-          `  Mappings: ${info.mappings}`,
-          info.rangeMappings > 0 ? `  Range mappings: ${info.rangeMappings}` : null,
-          `  Lines: ${info.lines}`,
-          info.sourcesWithContent > 0
-            ? `  Content: ${info.sourcesWithContent}/${info.sources} sources (${formatSize(info.totalContentSize)})`
-            : null,
-          `  File size: ${formatSize(info.fileSize)}`,
-          info.debugId ? `  Debug ID: ${info.debugId}` : null,
-        ].filter(Boolean);
+      const lines = [
+        "Source map info:",
+        info.file ? `  File: ${info.file}` : null,
+        `  Sources: ${info.sources}`,
+        `  Names: ${info.names}`,
+        `  Mappings: ${info.mappings}`,
+        info.rangeMappings > 0 ? `  Range mappings: ${info.rangeMappings}` : null,
+        `  Lines: ${info.lines}`,
+        info.sourcesWithContent > 0
+          ? `  Content: ${info.sourcesWithContent}/${info.sources} sources (${formatSize(info.totalContentSize)})`
+          : null,
+        `  File size: ${formatSize(info.fileSize)}`,
+        info.debugId ? `  Debug ID: ${info.debugId}` : null,
+      ].filter(Boolean);
 
-        return toTextResult(lines.join("\n"), { info });
-      } catch (error) {
-        return toErrorResult(error);
-      }
-    },
+      return toTextResult(lines.join("\n"), { info });
+    }),
   );
 
   server.registerTool(
@@ -57,23 +53,19 @@ export const registerInspectionTools = (server: McpServer, client: SrcmapClient)
         file: z.string().describe("Path to a source map file (.map)"),
       }),
     },
-    async ({ file }) => {
-      try {
-        const result = await client.validate(file);
-        const valid = result.valid as boolean;
+    guarded(async ({ file }) => {
+      const result = await client.validate(file);
+      const valid = result.valid as boolean;
 
-        if (valid) {
-          return toTextResult(
-            `Valid source map v3: ${result.sources} sources, ${result.names} names, ${result.mappings} mappings across ${result.lines} lines`,
-            result,
-          );
-        }
-
-        return toTextResult(`Invalid source map: ${result.error}`, result);
-      } catch (error) {
-        return toErrorResult(error);
+      if (valid) {
+        return toTextResult(
+          `Valid source map v3: ${result.sources} sources, ${result.names} names, ${result.mappings} mappings across ${result.lines} lines`,
+          result,
+        );
       }
-    },
+
+      return toTextResult(`Invalid source map: ${result.error}`, result);
+    }),
   );
 
   server.registerTool(
@@ -90,27 +82,23 @@ export const registerInspectionTools = (server: McpServer, client: SrcmapClient)
         file: z.string().describe("Path to a source map file (.map)"),
       }),
     },
-    async ({ file }) => {
-      try {
-        const result = await client.sources(file);
+    guarded(async ({ file }) => {
+      const result = await client.sources(file);
 
-        const lines = [
-          `Sources (${result.total}, ${result.withContent} with content):`,
-          "",
-          ...result.sources.map((s) => {
-            const size = s.hasContent && s.contentSize !== null
-              ? ` [${formatSize(s.contentSize)}]`
-              : " [no content]";
-            const ignored = s.ignored ? " (ignored)" : "";
-            return `  ${s.index}: ${s.source}${size}${ignored}`;
-          }),
-        ];
+      const lines = [
+        `Sources (${result.total}, ${result.withContent} with content):`,
+        "",
+        ...result.sources.map((s) => {
+          const size = s.hasContent && s.contentSize !== null
+            ? ` [${formatSize(s.contentSize)}]`
+            : " [no content]";
+          const ignored = s.ignored ? " (ignored)" : "";
+          return `  ${s.index}: ${s.source}${size}${ignored}`;
+        }),
+      ];
 
-        return toTextResult(lines.join("\n"), result);
-      } catch (error) {
-        return toErrorResult(error);
-      }
-    },
+      return toTextResult(lines.join("\n"), result);
+    }),
   );
 
   server.registerTool(
@@ -130,28 +118,24 @@ export const registerInspectionTools = (server: McpServer, client: SrcmapClient)
         offset: z.number().min(0).default(0).describe("Skip first N mappings (default: 0)"),
       }),
     },
-    async ({ file, source, limit, offset }) => {
-      try {
-        const result = await client.mappings(file, { source, limit, offset });
+    guarded(async ({ file, source, limit, offset }) => {
+      const result = await client.mappings(file, { source, limit, offset });
 
-        const lines = [
-          `Mappings (${result.total} total, showing ${result.offset}-${result.offset + result.mappings.length}):`,
-          "",
-          ...result.mappings.map((m) => {
-            const src = m.source ?? "-";
-            const name = m.name ? ` name=${m.name}` : "";
-            return `  ${m.generatedLine}:${m.generatedColumn} → ${src}:${m.originalLine}:${m.originalColumn}${name}`;
-          }),
-        ];
+      const lines = [
+        `Mappings (${result.total} total, showing ${result.offset}-${result.offset + result.mappings.length}):`,
+        "",
+        ...result.mappings.map((m) => {
+          const src = m.source ?? "-";
+          const name = m.name ? ` name=${m.name}` : "";
+          return `  ${m.generatedLine}:${m.generatedColumn} → ${src}:${m.originalLine}:${m.originalColumn}${name}`;
+        }),
+      ];
 
-        if (result.hasMore) {
-          lines.push("", `  ... ${result.total - result.offset - result.mappings.length} more (use offset=${result.offset + result.mappings.length})`);
-        }
-
-        return toTextResult(lines.join("\n"), result);
-      } catch (error) {
-        return toErrorResult(error);
+      if (result.hasMore) {
+        lines.push("", `  ... ${result.total - result.offset - result.mappings.length} more (use offset=${result.offset + result.mappings.length})`);
       }
-    },
+
+      return toTextResult(lines.join("\n"), result);
+    }),
   );
 };
