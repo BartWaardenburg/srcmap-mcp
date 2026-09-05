@@ -95,12 +95,6 @@ Node.js >= 20 and the `srcmap` CLI:
 cargo install srcmap-cli
 ```
 
-Verify it's available:
-
-```bash
-srcmap --version
-```
-
 ## Features
 
 **8 tools** across 3 categories for complete source map debugging:
@@ -136,15 +130,7 @@ srcmap --version
 | `SRCMAP_CACHE_TTL` | No | `300` | Cache TTL in seconds (0 to disable) |
 | `SRCMAP_TOOLSETS` | No | all | Comma-separated toolsets to enable |
 
-## Toolset Filtering
-
-| Toolset | Tools | Description |
-|---------|-------|-------------|
-| `inspection` | 4 | Source map metadata, validation, sources list, mappings |
-| `lookup` | 2 | Forward and reverse position lookups |
-| `fetch` | 2 | Remote fetching and source extraction |
-
-Example: `SRCMAP_TOOLSETS=lookup,fetch` enables only lookup and fetch tools.
+Toolset names match the Features categories: `SRCMAP_TOOLSETS=lookup,fetch` enables only the lookup and fetch tools.
 
 ## Example Usage
 
