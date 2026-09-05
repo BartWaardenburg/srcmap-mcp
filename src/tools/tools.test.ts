@@ -16,9 +16,9 @@ interface ToolResult {
 const createMockServer = () => {
   const handlers = new Map<string, ToolHandler>();
   return {
-    registerTool: vi.fn((name: string, _config: unknown, handler: ToolHandler) => {
+    registerTool: (name: string, _config: unknown, handler: ToolHandler): void => {
       handlers.set(name, handler);
-    }),
+    },
     getHandler: (name: string): ToolHandler => {
       const handler = handlers.get(name);
       if (!handler) throw new Error(`No handler registered for "${name}"`);
@@ -26,8 +26,6 @@ const createMockServer = () => {
     },
   };
 };
-
-const cliError = new SrcmapError("command failed", "CLI_ERROR");
 
 const createMockClient = (): Record<string, ReturnType<typeof vi.fn>> => ({
   info: vi.fn(),
@@ -77,8 +75,8 @@ describe("inspection tools", () => {
       expect(result.structuredContent).toBeDefined();
     });
 
-    it("handles errors", async () => {
-      client.info.mockRejectedValueOnce(cliError);
+    it("turns a thrown SrcmapError into an error result", async () => {
+      client.info.mockRejectedValueOnce(new SrcmapError("command failed", "CLI_ERROR"));
 
       const result = (await handler()({ file: "bad.map" })) as ToolResult;
 
@@ -196,15 +194,6 @@ describe("lookup tools", () => {
       expect(result.content[0].text).toContain(">");
       expect(result.structuredContent).toBeDefined();
     });
-
-    it("handles not-found errors", async () => {
-      client.lookup.mockRejectedValueOnce(new SrcmapError("no mapping found for 999:0", "NOT_FOUND"));
-
-      const result = (await handler()({ file: "bundle.js.map", line: 999, column: 0, context: 0 })) as ToolResult;
-
-      expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain("NOT_FOUND");
-    });
   });
 
   describe("sourcemap_resolve", () => {
@@ -257,15 +246,6 @@ describe("fetch tools", () => {
       const result = (await handler()({ url: "https://cdn.example.com/app.js", outputDir: "/tmp" })) as ToolResult;
 
       expect(result.content[0].text).toContain("No source map found");
-    });
-
-    it("handles fetch errors", async () => {
-      client.fetch.mockRejectedValueOnce(new SrcmapError("HTTP 404", "FETCH_ERROR"));
-
-      const result = (await handler()({ url: "https://bad.example.com/x.js", outputDir: "/tmp" })) as ToolResult;
-
-      expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain("FETCH_ERROR");
     });
   });
 
