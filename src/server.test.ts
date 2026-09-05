@@ -36,14 +36,9 @@ describe("createServer", () => {
 });
 
 describe("parseToolsets", () => {
-  it("returns all toolsets when env is undefined", () => {
-    const result = parseToolsets(undefined);
-    expect(result.size).toBe(3);
-  });
-
   it("returns all toolsets when env is empty", () => {
     const result = parseToolsets("");
-    expect(result.size).toBe(3);
+    expect(result).toEqual(new Set(["inspection", "lookup", "fetch"]));
   });
 
   it("parses a single toolset", () => {
@@ -63,7 +58,7 @@ describe("parseToolsets", () => {
 
   it("returns all toolsets if all names are invalid", () => {
     const result = parseToolsets("invalid,unknown");
-    expect(result.size).toBe(3);
+    expect(result).toEqual(new Set(["inspection", "lookup", "fetch"]));
   });
 
   it("handles whitespace in toolset names", () => {

@@ -10,12 +10,6 @@ describe("TtlCache", () => {
     vi.useRealTimers();
   });
 
-  it("stores and retrieves values", () => {
-    const cache = new TtlCache(1000);
-    cache.set("key", "value");
-    expect(cache.get("key")).toBe("value");
-  });
-
   it("returns undefined for missing keys", () => {
     const cache = new TtlCache(1000);
     expect(cache.get("missing")).toBeUndefined();

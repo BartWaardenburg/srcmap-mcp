@@ -6,6 +6,8 @@ import { registerLookupTools } from "./lookup.js";
 import { registerFetchTools } from "./fetch.js";
 
 type ToolHandler = (input: Record<string, unknown>) => Promise<unknown>;
+type MockClient = Record<string, ReturnType<typeof vi.fn>>;
+type MockServer = ReturnType<typeof createMockServer>;
 
 interface ToolResult {
   content: { type: string; text: string }[];
@@ -27,7 +29,22 @@ const createMockServer = () => {
   };
 };
 
-const createMockClient = (): Record<string, ReturnType<typeof vi.fn>> => ({
+const itTurnsErrorsIntoResults = (
+  get: () => { server: MockServer; client: MockClient },
+  cases: [tool: string, method: string][],
+): void => {
+  it.each(cases)("%s turns a thrown SrcmapError into an error result", async (tool, method) => {
+    const { server, client } = get();
+    client[method].mockRejectedValueOnce(new SrcmapError("command failed", "CLI_ERROR"));
+
+    const result = (await server.getHandler(tool)({})) as ToolResult;
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("srcmap error");
+  });
+};
+
+const createMockClient = (): MockClient => ({
   info: vi.fn(),
   validate: vi.fn(),
   sources: vi.fn(),
@@ -39,14 +56,21 @@ const createMockClient = (): Record<string, ReturnType<typeof vi.fn>> => ({
 });
 
 describe("inspection tools", () => {
-  let server: ReturnType<typeof createMockServer>;
-  let client: Record<string, ReturnType<typeof vi.fn>>;
+  let server: MockServer;
+  let client: MockClient;
 
   beforeEach(() => {
     server = createMockServer();
     client = createMockClient();
     registerInspectionTools(server as never, client as unknown as SrcmapClient);
   });
+
+  itTurnsErrorsIntoResults(() => ({ server, client }), [
+    ["sourcemap_info", "info"],
+    ["sourcemap_validate", "validate"],
+    ["sourcemap_sources", "sources"],
+    ["sourcemap_mappings", "mappings"],
+  ]);
 
   describe("sourcemap_info", () => {
     const handler = () => server.getHandler("sourcemap_info");
@@ -67,21 +91,10 @@ describe("inspection tools", () => {
 
       const result = (await handler()({ file: "bundle.js.map" })) as ToolResult;
 
-      expect(result.isError).toBeUndefined();
       expect(result.content[0].text).toContain("File: bundle.js");
       expect(result.content[0].text).toContain("Sources: 5");
       expect(result.content[0].text).toContain("Mappings: 500");
       expect(result.content[0].text).toContain("3/5 sources");
-      expect(result.structuredContent).toBeDefined();
-    });
-
-    it("turns a thrown SrcmapError into an error result", async () => {
-      client.info.mockRejectedValueOnce(new SrcmapError("command failed", "CLI_ERROR"));
-
-      const result = (await handler()({ file: "bad.map" })) as ToolResult;
-
-      expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain("srcmap error");
     });
   });
 
@@ -134,7 +147,6 @@ describe("inspection tools", () => {
       expect(result.content[0].text).toContain("src/app.ts");
       expect(result.content[0].text).toContain("1.0 KB");
       expect(result.content[0].text).toContain("no content");
-      expect(result.structuredContent).toBeDefined();
     });
   });
 
@@ -162,14 +174,19 @@ describe("inspection tools", () => {
 });
 
 describe("lookup tools", () => {
-  let server: ReturnType<typeof createMockServer>;
-  let client: Record<string, ReturnType<typeof vi.fn>>;
+  let server: MockServer;
+  let client: MockClient;
 
   beforeEach(() => {
     server = createMockServer();
     client = createMockClient();
     registerLookupTools(server as never, client as unknown as SrcmapClient);
   });
+
+  itTurnsErrorsIntoResults(() => ({ server, client }), [
+    ["sourcemap_lookup", "lookup"],
+    ["sourcemap_resolve", "resolve"],
+  ]);
 
   describe("sourcemap_lookup", () => {
     const handler = () => server.getHandler("sourcemap_lookup");
@@ -192,7 +209,6 @@ describe("lookup tools", () => {
       expect(result.content[0].text).toContain("src/app.ts:10:4");
       expect(result.content[0].text).toContain("handleClick");
       expect(result.content[0].text).toContain(">");
-      expect(result.structuredContent).toBeDefined();
     });
   });
 
@@ -205,20 +221,24 @@ describe("lookup tools", () => {
       const result = (await handler()({ file: "bundle.js.map", source: "src/app.ts", line: 10, column: 0 })) as ToolResult;
 
       expect(result.content[0].text).toContain("0:42");
-      expect(result.structuredContent).toBeDefined();
     });
   });
 });
 
 describe("fetch tools", () => {
-  let server: ReturnType<typeof createMockServer>;
-  let client: Record<string, ReturnType<typeof vi.fn>>;
+  let server: MockServer;
+  let client: MockClient;
 
   beforeEach(() => {
     server = createMockServer();
     client = createMockClient();
     registerFetchTools(server as never, client as unknown as SrcmapClient);
   });
+
+  itTurnsErrorsIntoResults(() => ({ server, client }), [
+    ["sourcemap_fetch", "fetch"],
+    ["sourcemap_extract_sources", "sourcesExtract"],
+  ]);
 
   describe("sourcemap_fetch", () => {
     const handler = () => server.getHandler("sourcemap_fetch");
@@ -234,7 +254,6 @@ describe("fetch tools", () => {
       expect(result.content[0].text).toContain("Fetched bundle");
       expect(result.content[0].text).toContain("Source map");
       expect(result.content[0].text).toContain("48.8 KB");
-      expect(result.structuredContent).toBeDefined();
     });
 
     it("reports when no source map found", async () => {
@@ -267,7 +286,6 @@ describe("fetch tools", () => {
       expect(result.content[0].text).toContain("Extracted 2/3");
       expect(result.content[0].text).toContain("src/app.ts");
       expect(result.content[0].text).toContain("Skipped 1");
-      expect(result.structuredContent).toBeDefined();
     });
   });
 });

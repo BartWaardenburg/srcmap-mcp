@@ -2,15 +2,9 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { isNewerVersion, checkForUpdate } from "./update-checker.js";
 
 describe("isNewerVersion", () => {
-  it("detects newer major version", () => {
+  it("detects newer major, minor and patch versions", () => {
     expect(isNewerVersion("2.0.0", "1.0.0")).toBe(true);
-  });
-
-  it("detects newer minor version", () => {
     expect(isNewerVersion("1.1.0", "1.0.0")).toBe(true);
-  });
-
-  it("detects newer patch version", () => {
     expect(isNewerVersion("1.0.1", "1.0.0")).toBe(true);
   });
 
@@ -30,6 +24,7 @@ describe("isNewerVersion", () => {
 describe("checkForUpdate", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("writes to stderr when update is available", async () => {
