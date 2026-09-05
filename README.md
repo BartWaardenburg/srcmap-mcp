@@ -89,7 +89,7 @@ docker run -i --rm ghcr.io/bartwaardenburg/srcmap-mcp
 
 ## Prerequisites
 
-This MCP server requires the `srcmap` CLI to be installed:
+Node.js >= 20 and the `srcmap` CLI:
 
 ```bash
 cargo install srcmap-cli
@@ -181,29 +181,6 @@ pnpm build        # Compile TypeScript
 pnpm test         # Run tests
 pnpm typecheck    # Type check without emitting
 ```
-
-### Project Structure
-
-```
-src/
-  index.ts              Entry point (env, client, transport)
-  server.ts             McpServer factory and toolset registry
-  srcmap-client.ts      CLI process wrapper with caching
-  cache.ts              TTL cache
-  tool-result.ts        Result/error formatting helpers
-  update-checker.ts     npm update checker
-  types.ts              TypeScript interfaces
-  tools/
-    inspection.ts       Info, validate, sources, mappings tools
-    lookup.ts           Lookup and resolve tools
-    fetch.ts            Fetch and extract tools
-    tools.test.ts       Tool handler tests
-```
-
-## Requirements
-
-- Node.js >= 20
-- `srcmap` CLI installed (`cargo install srcmap-cli`)
 
 ## License
 
