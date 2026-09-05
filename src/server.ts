@@ -29,33 +29,20 @@ export const parseToolsets = (env?: string): Set<Toolset> => {
 
 type ToolRegisterer = (server: McpServer, client: SrcmapClient) => void;
 
-const toolsetRegistry: Record<Toolset, ToolRegisterer[]> = {
-  inspection: [registerInspectionTools],
-  lookup: [registerLookupTools],
-  fetch: [registerFetchTools],
+const toolsetRegistry: Record<Toolset, ToolRegisterer> = {
+  inspection: registerInspectionTools,
+  lookup: registerLookupTools,
+  fetch: registerFetchTools,
 };
 
-export const createServer = (
-  client: SrcmapClient,
-  toolsets?: Set<Toolset>,
-): McpServer => {
+export const createServer = (client: SrcmapClient, toolsets: Set<Toolset>): McpServer => {
   const server = new McpServer({
     name: "srcmap-mcp",
     version,
   });
 
-  const enabled = toolsets ?? new Set(ALL_TOOLSETS);
-  const registered = new Set<ToolRegisterer>();
-
-  for (const toolset of enabled) {
-    const registerers = toolsetRegistry[toolset];
-
-    for (const register of registerers) {
-      if (!registered.has(register)) {
-        registered.add(register);
-        register(server, client);
-      }
-    }
+  for (const toolset of toolsets) {
+    toolsetRegistry[toolset](server, client);
   }
 
   return server;

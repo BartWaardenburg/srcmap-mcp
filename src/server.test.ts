@@ -7,37 +7,23 @@ const mockClient = {} as SrcmapClient;
 type RegisteredTool = { annotations?: Record<string, unknown> };
 type ServerWithTools = { _registeredTools: Record<string, RegisteredTool> };
 
-const getTools = (toolsets?: Set<string>): Record<string, RegisteredTool> =>
-  (createServer(mockClient, toolsets as never) as unknown as ServerWithTools)._registeredTools;
+const getTools = (toolsets = parseToolsets()): Record<string, RegisteredTool> =>
+  (createServer(mockClient, toolsets) as unknown as ServerWithTools)._registeredTools;
 
 describe("createServer", () => {
-  it("creates a server", () => {
-    const server = createServer(mockClient);
-    expect(server).toBeDefined();
-  });
-
-  it("registers all 8 tools", () => {
-    const tools = getTools();
-    expect(Object.keys(tools)).toHaveLength(8);
-  });
-
-  it("registers all expected tool names", () => {
+  it("registers exactly the expected tools", () => {
     const tools = getTools();
 
-    const expectedTools = [
-      "sourcemap_info",
-      "sourcemap_validate",
-      "sourcemap_sources",
-      "sourcemap_mappings",
-      "sourcemap_lookup",
-      "sourcemap_resolve",
-      "sourcemap_fetch",
+    expect(Object.keys(tools).sort()).toEqual([
       "sourcemap_extract_sources",
-    ];
-
-    for (const name of expectedTools) {
-      expect(name in tools, `Tool "${name}" should be registered`).toBe(true);
-    }
+      "sourcemap_fetch",
+      "sourcemap_info",
+      "sourcemap_lookup",
+      "sourcemap_mappings",
+      "sourcemap_resolve",
+      "sourcemap_sources",
+      "sourcemap_validate",
+    ]);
   });
 
   it("all tools have annotations", () => {
@@ -88,7 +74,7 @@ describe("parseToolsets", () => {
 
 describe("toolset filtering", () => {
   it("registers only inspection tools when inspection toolset is selected", () => {
-    const tools = getTools(new Set(["inspection"]) as never);
+    const tools = getTools(new Set(["inspection"]));
     expect("sourcemap_info" in tools).toBe(true);
     expect("sourcemap_validate" in tools).toBe(true);
     expect("sourcemap_sources" in tools).toBe(true);
@@ -98,7 +84,7 @@ describe("toolset filtering", () => {
   });
 
   it("registers only lookup tools when lookup toolset is selected", () => {
-    const tools = getTools(new Set(["lookup"]) as never);
+    const tools = getTools(new Set(["lookup"]));
     expect("sourcemap_lookup" in tools).toBe(true);
     expect("sourcemap_resolve" in tools).toBe(true);
     expect("sourcemap_info" in tools).toBe(false);
@@ -106,17 +92,10 @@ describe("toolset filtering", () => {
   });
 
   it("registers only fetch tools when fetch toolset is selected", () => {
-    const tools = getTools(new Set(["fetch"]) as never);
+    const tools = getTools(new Set(["fetch"]));
     expect("sourcemap_fetch" in tools).toBe(true);
     expect("sourcemap_extract_sources" in tools).toBe(true);
     expect("sourcemap_info" in tools).toBe(false);
     expect("sourcemap_lookup" in tools).toBe(false);
-  });
-
-  it("does not register duplicate tools when all toolsets are selected", () => {
-    const tools = getTools(new Set(["inspection", "lookup", "fetch"]) as never);
-    const toolNames = Object.keys(tools);
-    const unique = new Set(toolNames);
-    expect(toolNames.length).toBe(unique.size);
   });
 });

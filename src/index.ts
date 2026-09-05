@@ -21,7 +21,6 @@ const server = createServer(client, toolsets);
 const main = async (): Promise<void> => {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  // Fire-and-forget — don't block server startup
   void checkForUpdate(name, version);
 };
 
