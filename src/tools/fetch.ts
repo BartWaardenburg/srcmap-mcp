@@ -1,14 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
 import type { SrcmapClient } from "../srcmap-client.js";
-import type { FetchResult, ExtractResult } from "../types.js";
-import { toTextResult, toErrorResult } from "../tool-result.js";
-
-const formatSize = (bytes: number): string => {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
+import { formatSize, toTextResult, toErrorResult } from "../tool-result.js";
 
 export const registerFetchTools = (server: McpServer, client: SrcmapClient): void => {
   server.registerTool(
@@ -29,7 +22,7 @@ export const registerFetchTools = (server: McpServer, client: SrcmapClient): voi
     },
     async ({ url, outputDir }) => {
       try {
-        const result = (await client.fetch(url, outputDir)) as unknown as FetchResult;
+        const result = await client.fetch(url, outputDir);
 
         const parts = [
           `Fetched bundle: ${result.bundle.file} (${formatSize(result.bundle.size)})`,
@@ -41,7 +34,7 @@ export const registerFetchTools = (server: McpServer, client: SrcmapClient): voi
           parts.push("No source map found for this bundle.");
         }
 
-        return toTextResult(parts.join("\n"), result as unknown as Record<string, unknown>);
+        return toTextResult(parts.join("\n"), result);
       } catch (error) {
         return toErrorResult(error);
       }
@@ -66,7 +59,7 @@ export const registerFetchTools = (server: McpServer, client: SrcmapClient): voi
     },
     async ({ file, outputDir }) => {
       try {
-        const result = (await client.sourcesExtract(file, outputDir)) as unknown as ExtractResult;
+        const result = await client.sourcesExtract(file, outputDir);
 
         const parts = [
           `Extracted ${result.extracted.length}/${result.total} sources to ${outputDir}`,
@@ -83,7 +76,7 @@ export const registerFetchTools = (server: McpServer, client: SrcmapClient): voi
           parts.push("", `Skipped ${result.skipped.length} sources without content`);
         }
 
-        return toTextResult(parts.join("\n"), result as unknown as Record<string, unknown>);
+        return toTextResult(parts.join("\n"), result);
       } catch (error) {
         return toErrorResult(error);
       }

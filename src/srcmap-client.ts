@@ -1,6 +1,15 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { TtlCache } from "./cache.js";
+import type {
+  ExtractResult,
+  FetchResult,
+  LookupResult,
+  MappingsResult,
+  ResolveResult,
+  SourceMapInfo,
+  SourcesList,
+} from "./types.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -8,15 +17,10 @@ export class SrcmapError extends Error {
   constructor(
     message: string,
     public readonly code: string,
-    public readonly details?: unknown,
   ) {
     super(message);
     this.name = "SrcmapError";
   }
-}
-
-export interface RetryOptions {
-  maxRetries: number;
 }
 
 export class SrcmapClient {
@@ -24,11 +28,8 @@ export class SrcmapClient {
   private readonly cache: TtlCache;
   private readonly cachingEnabled: boolean;
 
-  constructor(
-    binary?: string,
-    cacheTtlMs?: number,
-  ) {
-    this.binary = binary ?? "srcmap";
+  constructor(binary: string, cacheTtlMs?: number) {
+    this.binary = binary;
     const ttl = cacheTtlMs ?? 300_000;
     this.cache = new TtlCache(ttl);
     this.cachingEnabled = ttl > 0;
@@ -79,7 +80,7 @@ export class SrcmapClient {
     return result;
   }
 
-  async info(file: string): Promise<Record<string, unknown>> {
+  async info(file: string): Promise<SourceMapInfo> {
     return this.cachedRunJson(`info:${file}`, ["info", file]);
   }
 
@@ -92,7 +93,7 @@ export class SrcmapClient {
     line: number,
     column: number,
     context?: number,
-  ): Promise<Record<string, unknown>> {
+  ): Promise<LookupResult> {
     const args = ["lookup", file, String(line), String(column)];
     if (context !== undefined && context > 0) {
       args.push("--context", String(context));
@@ -105,38 +106,30 @@ export class SrcmapClient {
     source: string,
     line: number,
     column: number,
-  ): Promise<Record<string, unknown>> {
+  ): Promise<ResolveResult> {
     return this.runJson(["resolve", file, "--source", source, String(line), String(column)]);
   }
 
-  async sources(file: string): Promise<Record<string, unknown>> {
+  async sources(file: string): Promise<SourcesList> {
     return this.cachedRunJson(`sources:${file}`, ["sources", file]);
   }
 
-  async sourcesExtract(file: string, outputDir: string): Promise<Record<string, unknown>> {
+  async sourcesExtract(file: string, outputDir: string): Promise<ExtractResult> {
     return this.runJson(["sources", file, "--extract", "-o", outputDir]);
   }
 
-  async fetch(url: string, outputDir: string): Promise<Record<string, unknown>> {
+  async fetch(url: string, outputDir: string): Promise<FetchResult> {
     return this.runJson(["fetch", url, "-o", outputDir]);
   }
 
   async mappings(
     file: string,
     options?: { source?: string; limit?: number; offset?: number },
-  ): Promise<Record<string, unknown>> {
+  ): Promise<MappingsResult> {
     const args = ["mappings", file];
     if (options?.source) args.push("--source", options.source);
     if (options?.limit !== undefined) args.push("--limit", String(options.limit));
     if (options?.offset !== undefined) args.push("--offset", String(options.offset));
     return this.runJson(args);
-  }
-
-  async symbolicate(input: string, maps: string[]): Promise<string> {
-    const args = ["symbolicate", input];
-    for (const map of maps) {
-      args.push("--map", map);
-    }
-    return this.run([...args, "--json"]);
   }
 }

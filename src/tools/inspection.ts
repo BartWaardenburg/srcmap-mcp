@@ -1,14 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
 import type { SrcmapClient } from "../srcmap-client.js";
-import type { SourceMapInfo, SourcesList, MappingsResult, SourceEntry } from "../types.js";
-import { toTextResult, toErrorResult } from "../tool-result.js";
-
-const formatSize = (bytes: number): string => {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
+import { formatSize, toTextResult, toErrorResult } from "../tool-result.js";
 
 export const registerInspectionTools = (server: McpServer, client: SrcmapClient): void => {
   server.registerTool(
@@ -27,7 +20,7 @@ export const registerInspectionTools = (server: McpServer, client: SrcmapClient)
     },
     async ({ file }) => {
       try {
-        const info = (await client.info(file)) as unknown as SourceMapInfo;
+        const info = await client.info(file);
 
         const lines = [
           "Source map info:",
@@ -44,7 +37,7 @@ export const registerInspectionTools = (server: McpServer, client: SrcmapClient)
           info.debugId ? `  Debug ID: ${info.debugId}` : null,
         ].filter(Boolean);
 
-        return toTextResult(lines.join("\n"), { info } as Record<string, unknown>);
+        return toTextResult(lines.join("\n"), { info });
       } catch (error) {
         return toErrorResult(error);
       }
@@ -66,7 +59,7 @@ export const registerInspectionTools = (server: McpServer, client: SrcmapClient)
     },
     async ({ file }) => {
       try {
-        const result = (await client.validate(file)) as Record<string, unknown>;
+        const result = await client.validate(file);
         const valid = result.valid as boolean;
 
         if (valid) {
@@ -99,12 +92,12 @@ export const registerInspectionTools = (server: McpServer, client: SrcmapClient)
     },
     async ({ file }) => {
       try {
-        const result = (await client.sources(file)) as unknown as SourcesList;
+        const result = await client.sources(file);
 
         const lines = [
           `Sources (${result.total}, ${result.withContent} with content):`,
           "",
-          ...result.sources.map((s: SourceEntry) => {
+          ...result.sources.map((s) => {
             const size = s.hasContent && s.contentSize !== null
               ? ` [${formatSize(s.contentSize)}]`
               : " [no content]";
@@ -113,7 +106,7 @@ export const registerInspectionTools = (server: McpServer, client: SrcmapClient)
           }),
         ];
 
-        return toTextResult(lines.join("\n"), result as unknown as Record<string, unknown>);
+        return toTextResult(lines.join("\n"), result);
       } catch (error) {
         return toErrorResult(error);
       }
@@ -139,7 +132,7 @@ export const registerInspectionTools = (server: McpServer, client: SrcmapClient)
     },
     async ({ file, source, limit, offset }) => {
       try {
-        const result = (await client.mappings(file, { source, limit, offset })) as unknown as MappingsResult;
+        const result = await client.mappings(file, { source, limit, offset });
 
         const lines = [
           `Mappings (${result.total} total, showing ${result.offset}-${result.offset + result.mappings.length}):`,
@@ -155,7 +148,7 @@ export const registerInspectionTools = (server: McpServer, client: SrcmapClient)
           lines.push("", `  ... ${result.total - result.offset - result.mappings.length} more (use offset=${result.offset + result.mappings.length})`);
         }
 
-        return toTextResult(lines.join("\n"), result as unknown as Record<string, unknown>);
+        return toTextResult(lines.join("\n"), result);
       } catch (error) {
         return toErrorResult(error);
       }

@@ -1,11 +1,14 @@
 import { SrcmapError } from "./srcmap-client.js";
 
-export const toTextResult = (
-  text: string,
-  structuredContent?: Record<string, unknown>,
-) => ({
+export const formatSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+export const toTextResult = (text: string, structuredContent?: object) => ({
   content: [{ type: "text" as const, text }],
-  ...(structuredContent ? { structuredContent } : {}),
+  ...(structuredContent ? { structuredContent: structuredContent as Record<string, unknown> } : {}),
 });
 
 const getRecoverySuggestion = (code: string, message: string): string | null => {

@@ -38,10 +38,7 @@ const createMockClient = (): Record<string, ReturnType<typeof vi.fn>> => ({
   lookup: vi.fn(),
   resolve: vi.fn(),
   fetch: vi.fn(),
-  symbolicate: vi.fn(),
 });
-
-// --- Inspection Tools ---
 
 describe("inspection tools", () => {
   let server: ReturnType<typeof createMockServer>;
@@ -166,8 +163,6 @@ describe("inspection tools", () => {
   });
 });
 
-// --- Lookup Tools ---
-
 describe("lookup tools", () => {
   let server: ReturnType<typeof createMockServer>;
   let client: Record<string, ReturnType<typeof vi.fn>>;
@@ -225,8 +220,6 @@ describe("lookup tools", () => {
     });
   });
 });
-
-// --- Fetch Tools ---
 
 describe("fetch tools", () => {
   let server: ReturnType<typeof createMockServer>;

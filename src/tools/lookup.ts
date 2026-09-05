@@ -1,7 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
 import type { SrcmapClient } from "../srcmap-client.js";
-import type { LookupResult, ContextLine, ResolveResult } from "../types.js";
 import { toTextResult, toErrorResult } from "../tool-result.js";
 
 export const registerLookupTools = (server: McpServer, client: SrcmapClient): void => {
@@ -26,7 +25,7 @@ export const registerLookupTools = (server: McpServer, client: SrcmapClient): vo
     },
     async ({ file, line, column, context }) => {
       try {
-        const result = (await client.lookup(file, line, column, context)) as unknown as LookupResult;
+        const result = await client.lookup(file, line, column, context);
 
         const parts = [
           `${result.source}:${result.line}:${result.column}`,
@@ -36,14 +35,14 @@ export const registerLookupTools = (server: McpServer, client: SrcmapClient): vo
         if (result.context && result.context.length > 0) {
           parts.push("");
           const gutterWidth = String(result.context[result.context.length - 1].line).length;
-          for (const ctx of result.context as ContextLine[]) {
+          for (const ctx of result.context) {
             const marker = ctx.highlight ? ">" : " ";
             const lineNum = String(ctx.line).padStart(gutterWidth);
             parts.push(`${marker} ${lineNum} | ${ctx.text}`);
           }
         }
 
-        return toTextResult(parts.join("\n"), result as unknown as Record<string, unknown>);
+        return toTextResult(parts.join("\n"), result);
       } catch (error) {
         return toErrorResult(error);
       }
@@ -69,11 +68,11 @@ export const registerLookupTools = (server: McpServer, client: SrcmapClient): vo
     },
     async ({ file, source, line, column }) => {
       try {
-        const result = (await client.resolve(file, source, line, column)) as unknown as ResolveResult;
+        const result = await client.resolve(file, source, line, column);
 
         return toTextResult(
           `Generated position: ${result.line}:${result.column}`,
-          result as unknown as Record<string, unknown>,
+          result,
         );
       } catch (error) {
         return toErrorResult(error);
