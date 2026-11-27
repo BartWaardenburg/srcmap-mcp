@@ -1,6 +1,6 @@
 {
   "name": "srcmap-mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "packageManager": "pnpm@10.28.1",
   "description": "MCP server for source map debugging — fetch, inspect, lookup, and extract original sources from any production website",
   "type": "module",

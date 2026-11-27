@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/BartWaardenburg/srcmap-mcp/compare/v0.2.0...v0.2.1) (2026-11-27)
+
+### Bug Fixes
+
+* copy pnpm-workspace.yaml into the Docker build and build the image in CI ([827437a](https://github.com/BartWaardenburg/srcmap-mcp/commit/827437a9de7c0d5688ca211eef71b3732b08b0ae))
+* keep the server.json description within the 100 character limit of the MCP registry ([96af17d](https://github.com/BartWaardenburg/srcmap-mcp/commit/96af17daeb02881dd128f495c41d7ec3cbc9008e))
+
 # 0.2.0 (2026-11-27)
 
 ### Bug Fixes
