@@ -2,7 +2,7 @@
   "name": "srcmap-mcp",
   "version": "0.1.0",
   "packageManager": "pnpm@10.28.1",
-  "description": "MCP server for source map debugging — fetch, inspect, lookup, and extract original sources from any production website",
+  "description": "MCP server for source map debugging \u2014 fetch, inspect, lookup, and extract original sources from any production website",
   "type": "module",
   "bin": {
     "srcmap-mcp": "dist/index.js"
@@ -45,10 +45,11 @@
   },
   "homepage": "https://github.com/bartwaardenburg/srcmap-mcp#readme",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@modelcontextprotocol/server": "^2.4.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "^2.4.0",
     "@release-it/conventional-changelog": "^12.0.2",
     "@types/node": "^26.6.6",
     "@vitest/coverage-v8": "^5.1.0",
@@ -60,10 +61,5 @@
   },
   "engines": {
     "node": ">=20"
-  },
-  "pnpm": {
-    "overrides": {
-      "basic-ftp": "^6.2.5"
-    }
   }
 }

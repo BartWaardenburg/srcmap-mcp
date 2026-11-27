@@ -9,6 +9,8 @@
 
 MCP server for source map debugging. Fetch, inspect, look up, and extract original sources from any production website — directly from your AI assistant.
 
+The server supports MCP specification 2026-07-28. Clients that use the 2025 handshake also work.
+
 ## Add To Your Editor
 
 ### Claude Code
