@@ -2,18 +2,18 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.BartWaardenburg/srcmap-mcp",
   "title": "Source Map Debugger",
-  "description": "MCP server for source map debugging: fetch, inspect, lookup, and extract original sources from any production website",
+  "description": "Debug production source maps: fetch, inspect, look up and extract original sources",
   "repository": {
     "url": "https://github.com/BartWaardenburg/srcmap-mcp",
     "source": "github"
   },
   "websiteUrl": "https://github.com/BartWaardenburg/srcmap-mcp",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "srcmap-mcp",
-      "version": "0.1.0",
+      "version": "0.2.1",
       "transport": {
         "type": "stdio"
       },
