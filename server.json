@@ -1,0 +1,45 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.BartWaardenburg/srcmap-mcp",
+  "title": "Source Map Debugger",
+  "description": "MCP server for source map debugging: fetch, inspect, lookup, and extract original sources from any production website",
+  "repository": {
+    "url": "https://github.com/BartWaardenburg/srcmap-mcp",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/BartWaardenburg/srcmap-mcp",
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "srcmap-mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "SRCMAP_BINARY",
+          "description": "Path to the srcmap CLI binary (default: srcmap)",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "SRCMAP_CACHE_TTL",
+          "description": "Cache TTL in seconds (default: 300, 0 to disable)",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        },
+        {
+          "name": "SRCMAP_TOOLSETS",
+          "description": "Comma-separated toolsets to enable: inspection, lookup, fetch (default: all)",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

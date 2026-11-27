@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/server";
 import type { SrcmapClient } from "./srcmap-client.js";
 import { registerInspectionTools } from "./tools/inspection.js";
 import { registerLookupTools } from "./tools/lookup.js";
@@ -35,13 +35,28 @@ const toolsetRegistry: Record<Toolset, ToolRegisterer> = {
   fetch: registerFetchTools,
 };
 
-export const createServer = (client: SrcmapClient, toolsets: Set<Toolset>): McpServer => {
-  const server = new McpServer({
-    name: "srcmap-mcp",
-    version,
-  });
+const INSTRUCTIONS = [
+  "Debug production JavaScript and CSS with source maps. The srcmap CLI must be installed.",
+  "Start with sourcemap_fetch to download a bundle and its source map from a URL.",
+  "Then call sourcemap_info, sourcemap_validate or sourcemap_sources to inspect the map.",
+  "Use sourcemap_lookup and sourcemap_resolve to map positions between generated and original code.",
+  "Call sourcemap_extract_sources to write the original files to disk.",
+  "Set SRCMAP_BINARY if the srcmap binary is not on PATH.",
+].join("\n");
 
-  for (const toolset of toolsets) {
+export const createServer = (client: SrcmapClient, toolsets: Set<Toolset>): McpServer => {
+  const server = new McpServer(
+    {
+      name: "srcmap-mcp",
+      title: "Source Map Debugger",
+      version,
+      websiteUrl: "https://github.com/BartWaardenburg/srcmap-mcp",
+    },
+    { instructions: INSTRUCTIONS },
+  );
+
+  // Iterate the fixed list, not the user input, so tools/list has one stable order.
+  for (const toolset of ALL_TOOLSETS.filter((t) => toolsets.has(t))) {
     toolsetRegistry[toolset](server, client);
   }
 
